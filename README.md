@@ -1,6 +1,6 @@
 # Hydroponika
 
-1. Zestawianie elementów:  
+##1. Zestawianie elementów:  
 ESP 32 S3 -	2	-	https://sklep.msalamon.pl/produkt/plytka-esp32-esp32-s3-devkit-wifi-ble-5-0/?srsltid=AfmBOopVW2lVYn1d48SL01SIoFlZ9UY8YYy-kPAcobjBQ8S2jZrlU6ny  
 wyświetlacz tft 2,2" - 1 - https://botland.com.pl/wyswietlacze-i-ekrany/16724-wyswietlacz-graficzny-tft-lcd-22-320x240px-spi-5904422344955.html  
 czujnik poziomu cieczy CMW55 - 6	-	https://botland.com.pl/czujniki-poziomu-cieczy/3730-czujnik-poziomu-cieczy-cmw55-magnetyczny-5904422373764.html  
