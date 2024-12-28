@@ -14,3 +14,6 @@
 | [pleksi 10x10cm](https://allegro.pl/oferta/bezbarwna-plyta-plexi-pleksi-cieta-na-wymiar-3mm-15663933713) | 160 |  
 | [zawias pasowy 50x25](https://www.castorama.pl/zawias-pasowy-50-x-25-mm-ocynk/5901912814080_CAPL.prd) | 4 |  
 | [spienione pcv 100x100](https://allegro.pl/oferta/plyta-ze-spienionego-pcv-100x100-cm-biala-3-mm-spienione-pcv-pwc-pvc-15968227536) | 3 |
+
+### Schemat układu
+![schemat](https://github.com/user-attachments/assets/1fad5d8f-6f29-462d-b8cd-c0d464e970a1)
