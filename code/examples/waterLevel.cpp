@@ -10,13 +10,15 @@ ESP32 GND <-> Sensor zwarciowy <-> ESP32 GPIO 1
 */
 
 #include <Arduino.h>
-#include "BinarySensor.h"
+#include "Sensor.h"
 
-BinarySensor *waterSensor;
+Sensor<bool> *waterSensor;
 
 void setup() {
 	Serial.begin(11520);
-	waterSensor = new BinarySensor(1, INPUT_PULLUP);
+	
+	pinMode(1, INPUT_PULLUP);
+	waterSensor = new Sensor<bool>([](){return digitalRead(1);});
 }
 
 void loop() {
