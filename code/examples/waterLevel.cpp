@@ -18,7 +18,7 @@ void setup() {
 	Serial.begin(11520);
 	
 	pinMode(1, INPUT_PULLUP);
-	waterSensor = new Sensor<bool>([](){return digitalRead(1);});
+	waterSensor = new Sensor<bool>([]()->bool{return digitalRead(1);});
 }
 
 void loop() {

@@ -10,19 +10,19 @@ Sensor.h
 template <typename DATA>
 class Sensor {
 public:
-	Sensor(std::function<bool(void)> readFunc);
+	Sensor(std::function<DATA(void)> readFunc);
 
 	void update(); // Odczytaj dane z sensora i nadpisz aktualnie przechowywane wartości
 	DATA read();
 
 protected:
-	std::function<bool(void)> readFunction; // Wskaźnik do funckji odczytu
+	std::function<DATA(void)> readFunction; // Wskaźnik do funckji odczytu
 	DATA lastRead; // Ostatnio odczytane dane z sensora
 	bool connectionError; // Czy wystąpił błąd odczytu
 };
 
 template <typename DATA>
-Sensor<DATA>::Sensor(std::function<bool()> readFunc):
+Sensor<DATA>::Sensor(std::function<DATA(void)> readFunc):
 	readFunction(readFunc)
 {
 	update();
