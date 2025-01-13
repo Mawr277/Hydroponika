@@ -1,19 +1,19 @@
 #include <Arduino.h>
 #include <DS18B20.h>
-#include "Sensor.h"
+#include "DataSensor.h"
 
 // Pin connected to DS18B20 DATA
 #define DATA_PIN 5
 
 DS18B20 *ds;
-Sensor<float> *temperature;
+DataSensor<float> *temperature;
 
 
 void setup(void) {
 	Serial.begin(11520);
 	
 	ds = new DS18B20(5);
-	temperature = new Sensor<float>([]()->float{return ds->getTempC();});
+	temperature = new DataSensor<float>([]()->float{return ds->getTempC();});
 }
 
 void loop(void) { 
