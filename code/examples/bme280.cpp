@@ -43,19 +43,19 @@ void setup() {
 
 	sensors[0] = temperature = new DataSensor<float>([]()->float{
 		bme280->startMeasurement();
-		while (bme280->isMeasuring()) {}
+		while (bme280->isMeasuring()) {} // Measurement in progress
 		return (float)bme280->getTemperature() / 100.0;
 	});
 
 	sensors[1] = humidity = new DataSensor<float>([]()->float{
 		bme280->startMeasurement();
-		while (bme280->isMeasuring()) {}
-		return (float)(bme280->getHumidity() % 1024) * 100.0 / 1024.0;
+		while (bme280->isMeasuring()) {} // Measurement in progress
+		return (float)bme280->getHumidity() / 1024.0;
 	});
 
 	sensors[2] = pressure = new DataSensor<int>([]()->int{
 		bme280->startMeasurement();
-		while (bme280->isMeasuring()) {}
+		while (bme280->isMeasuring()) {} // Measurement in progress
 		return (float)bme280->getPressure();
 	});
 }
@@ -68,6 +68,8 @@ void loop() {
 	Serial.printf("Temperature: %.2f `C\n", temperature->read());
 	Serial.printf("Humidity: %.2f %c\n", humidity->read(),'%');
 	Serial.printf("Pressure: %i Pa\n", pressure->read());
+
+	
 
 	delay(1000);
 }
