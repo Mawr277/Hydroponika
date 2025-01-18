@@ -15,9 +15,19 @@
 | [zawias pasowy 50x25](https://www.castorama.pl/zawias-pasowy-50-x-25-mm-ocynk/5901912814080_CAPL.prd) | 4 |  
 | [spienione pcv 100x100](https://allegro.pl/oferta/plyta-ze-spienionego-pcv-100x100-cm-biala-3-mm-spienione-pcv-pwc-pvc-15968227536) | 3 |
 
+---
+
 ### Schemat układu
 ![schemat](./schemat.png)
+
+---
 
 ### Kod
 Projekt napisany przy wykorzystaniu [PlatromIO](https://platformio.org/) oraz [frameworku arduino](https://docs.platformio.org/en/latest/frameworks/arduino.html).  
 Użyty ESP32 wymaga dodania do folderu `.platformio/platforms/espressif32/boards` pliku [esp32-s3-devkitc-1-n16r8v.json](./code/esp32-s3-devkitc-1-n16r8v.json), żeby współpracował z `PlatromIO` 
+
+### To do
+ - Dwa stany programu
+	- Stan gdzie `włączone są pompy`, aktualizuj tylko czujniki poziomu wody, tak żeby możliwie szybko wyłączyć pompy wody
+	- Stan gdzie `wyłączone są pompy`, aktualizuj wszystkie sensory
+	
