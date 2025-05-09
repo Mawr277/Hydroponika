@@ -5,6 +5,7 @@
 #include <Arduino.h>
 #include <pocketBME280.h>
 #include <DS18B20.h>
+#include "Adafruit_ILI9341.h"
 
 #include "BinaryOut.h"
 #include "DataSensor.h"
@@ -22,6 +23,14 @@
 #define DS18B20_1 8
 #define DS18B20_2 9
 
+// Piny połączone z wyswietlaczem
+#define TFT_MOSI 11
+#define TFT_MISO 13
+#define TFT_SCK 12
+#define TFT_CS 3
+#define TFT_RST 46
+#define TFT_DC 10
+
 // Połączenia z BME280
 #define BME280_SDA 21
 #define BME280_SCL 47
@@ -31,6 +40,7 @@
 pocketBME280 *bme280;
 TwoWire *i2c;
 DS18B20 *ds18b20[2];
+Adafruit_ILI9341 *display;
 
 BinaryOut *relays[2];
 DataSensor<bool> *waterLevels[3];
@@ -42,6 +52,11 @@ Sensor *sensors[SENSORS_NUM];
 
 void setup() {
 	Serial.begin(115200);
+	// Inicjalizacja wyswietlacza
+	display = new Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
+	display->begin(1200000000);
+	display->setTextSize(2);
+	display->fillScreen(ILI9341_BLACK);
 
 	// Konfiguracja pinów połączonych z czujnikami poziomu cieczy
 	pinMode(WL_DONICZKA_1, INPUT_PULLUP);
@@ -123,22 +138,31 @@ void setup() {
 
 void loop() {
 	// Update sensorów
-	Serial.println("Przed");
 	for (int i = 0; i < SENSORS_NUM; i++) {
 		sensors[i]->update();
 	}
-	Serial.println("Po");
 
 	relays[0]->update();
 	relays[1]->update();
 
+	display->fillScreen(ILI9341_BLACK);
+	yield();
+	display->setCursor(0, 0);
+	display->setTextColor(ILI9341_WHITE);  
+	display->println("Hydroponika");
+	display->println("");
+
 	Serial.printf("%.2f`C\n", temperatures[0]->read());
 	Serial.printf("%.2f`C\n", temperatures[1]->read());
 	Serial.printf("%.2f`C\n", temperatures[2]->read());
-
 	Serial.printf("%.2f%c\n", humidity->read(), '%');
-
 	Serial.printf("%dPa\n", pressure->read());
+
+	display->println((std::to_string(temperatures[0]->read()) + " `C").c_str());
+	display->println((std::to_string(temperatures[1]->read()) + " `C").c_str());
+	display->println((std::to_string(temperatures[0]->read()) + " `C").c_str());
+	display->println((std::to_string(humidity->read()) + " %").c_str());
+	display->println((std::to_string(pressure->read()) + " Pa").c_str());
 
 	for (int i = 0; i < 3; i++) {
 		Serial.printf("Sensor wody %d: ", i+1);
@@ -152,5 +176,4 @@ void loop() {
 
 	Serial.println("============================");
 
-	delay(100);
 }

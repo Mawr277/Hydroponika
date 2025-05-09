@@ -19,18 +19,22 @@ public:
 protected:
 	std::function<DATA(void)> readFunction; // Wskaźnik do funckji odczytu
 	DATA lastRead; // Ostatnio odczytane dane z sensora
+	DATA previousRead;
 	bool connectionError; // Czy wystąpił błąd odczytu
 };
 
 template <typename DATA>
 DataSensor<DATA>::DataSensor(std::function<DATA(void)> readFunc):
-	readFunction(readFunc)
+	readFunction(readFunc),
+	previousRead(0),
+	lastRead(0)
 {
 	update();
 }
 
 template <typename DATA>
 void DataSensor<DATA>::update() {
+	previousRead = lastRead;
 	lastRead = readFunction();
 }
 
