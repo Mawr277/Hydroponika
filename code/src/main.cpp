@@ -35,7 +35,7 @@
 #define BME280_SDA 21
 #define BME280_SCL 47
 
-#define SENSORS_NUM 8
+#define SENSORS_NUM 5
 
 pocketBME280 *bme280;
 TwoWire *i2c;
@@ -43,15 +43,28 @@ DS18B20 *ds18b20[2];
 Adafruit_ILI9341 *display;
 
 BinaryOut *relays[2];
-DataSensor<bool> *waterLevels[3];
+DataSensor<bool> *waterLevels[2];
+DataSensor<bool> *mainWaterTank;
 DataSensor<float> *temperatures[3];
 DataSensor<int> *pressure;
 DataSensor<float> *humidity;
 
 Sensor *sensors[SENSORS_NUM];
 
+String float2string (float value, int precision = 1);
+
+enum class ProgramState {
+	ReadSensors,
+	FillUpWater,
+	NoWater
+};
+ProgramState currentState;
+
 void setup() {
+	currentState = ProgramState::ReadSensors;
+
 	Serial.begin(115200);
+
 	// Inicjalizacja wyswietlacza
 	display = new Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
 	display->begin(1200000000);
@@ -62,9 +75,9 @@ void setup() {
 	pinMode(WL_DONICZKA_1, INPUT_PULLUP);
 	pinMode(WL_DONICZKA_2, INPUT_PULLUP);
 	pinMode(WL_ZBIORNIK, INPUT_PULLUP);
-	sensors[0] = waterLevels[0] = new DataSensor<bool>([]()->bool{return digitalRead(WL_DONICZKA_1);});
-	sensors[1] = waterLevels[1] = new DataSensor<bool>([]()->bool{return digitalRead(WL_DONICZKA_2);});
-	sensors[2] = waterLevels[2] = new DataSensor<bool>([]()->bool{return digitalRead(WL_ZBIORNIK);});
+	waterLevels[0] = new DataSensor<bool>([]()->bool{return digitalRead(WL_DONICZKA_1);});
+	waterLevels[1] = new DataSensor<bool>([]()->bool{return digitalRead(WL_DONICZKA_2);});
+	mainWaterTank = new DataSensor<bool>([]()->bool{return digitalRead(WL_ZBIORNIK);});
 	
 	// Konfiguracja pinów połączonych z przekaźnikami
 	pinMode(RELAY_DONICZKA_1, OUTPUT);
@@ -76,7 +89,10 @@ void setup() {
 		[](bool newState){ digitalWrite(RELAY_DONICZKA_1, newState); },
 
 		// conditionFunc
-		[](){ return !waterLevels[0]->read(); },
+		[](){
+			waterLevels[0]->update(); 
+			return !waterLevels[0]->read(); 
+		},
 
 		// inverted
 		true
@@ -87,7 +103,10 @@ void setup() {
 		[](bool newState){ digitalWrite(RELAY_DONICZKA_2, newState); },
 
 		// conditionFunc
-		[](){ return !waterLevels[1]->read(); },
+		[](){
+			waterLevels[1]->update(); 
+			return !waterLevels[1]->read(); 
+		},
 
 		// inverted
 		true
@@ -97,8 +116,8 @@ void setup() {
 	ds18b20[0] = new DS18B20(DS18B20_1);
 	ds18b20[1] = new DS18B20(DS18B20_2);
 	
-	sensors[3] = temperatures[0] = new DataSensor<float>([]()->float{return ds18b20[0]->getTempC();});
-	sensors[4] = temperatures[1] = new DataSensor<float>([]()->float{return ds18b20[1]->getTempC();});
+	sensors[0] = temperatures[0] = new DataSensor<float>([]()->float{return ds18b20[0]->getTempC();});
+	sensors[1] = temperatures[1] = new DataSensor<float>([]()->float{return ds18b20[1]->getTempC();});
 
 	// Konfiguracja BME280
 	i2c = new TwoWire(0);
@@ -117,19 +136,19 @@ void setup() {
 		}
 	}
 
-	sensors[5] = temperatures[2] = new DataSensor<float>([]()->float{
+	sensors[2] = temperatures[2] = new DataSensor<float>([]()->float{
 		bme280->startMeasurement();
 		while (bme280->isMeasuring()) {} // Measurement in progress
 		return (float)bme280->getTemperature() / 100.0;
 	});
 
-	sensors[6] = humidity = new DataSensor<float>([]()->float{
+	sensors[3] = humidity = new DataSensor<float>([]()->float{
 		bme280->startMeasurement();
 		while (bme280->isMeasuring()) {} // Measurement in progress
 		return (float)bme280->getHumidity() / 1024.0;
 	});
 
-	sensors[7] = pressure = new DataSensor<int>([]()->int{
+	sensors[4] = pressure = new DataSensor<int>([]()->int{
 		bme280->startMeasurement();
 		while (bme280->isMeasuring()) {} // Measurement in progress
 		return (float)bme280->getPressure();
@@ -137,43 +156,73 @@ void setup() {
 }
 
 void loop() {
-	// Update sensorów
-	for (int i = 0; i < SENSORS_NUM; i++) {
-		sensors[i]->update();
+
+	// Sprawdz czy nie brakuje wody w glownym zbiorniku
+	mainWaterTank->update();
+	if (mainWaterTank->read() == LOW) {
+		if (currentState == ProgramState::FillUpWater) {
+			// Wylacz pompy
+			relays[0]->write(LOW);
+			relays[1]->write(LOW);
+		}
+
+		if (currentState != ProgramState::NoWater) {
+			currentState = ProgramState::NoWater;
+
+			display->fillScreen(ILI9341_BLACK);
+			display->setCursor(0, 0);
+			display->setTextColor(ILI9341_WHITE);  
+			display->println("Hydroponika");
+			display->println("");
+			display->setTextColor(ILI9341_RED);  
+			display->println("Uzupelnij wode!");
+			display->setTextColor(ILI9341_WHITE); 
+		}
+
+		return;
 	}
 
+	// Sprawdz czy nie trzeba uzupelnic wody
 	relays[0]->update();
 	relays[1]->update();
-
-	display->fillScreen(ILI9341_BLACK);
-	yield();
-	display->setCursor(0, 0);
-	display->setTextColor(ILI9341_WHITE);  
-	display->println("Hydroponika");
-	display->println("");
-
-	Serial.printf("%.2f`C\n", temperatures[0]->read());
-	Serial.printf("%.2f`C\n", temperatures[1]->read());
-	Serial.printf("%.2f`C\n", temperatures[2]->read());
-	Serial.printf("%.2f%c\n", humidity->read(), '%');
-	Serial.printf("%dPa\n", pressure->read());
-
-	display->println((std::to_string(temperatures[0]->read()) + " `C").c_str());
-	display->println((std::to_string(temperatures[1]->read()) + " `C").c_str());
-	display->println((std::to_string(temperatures[0]->read()) + " `C").c_str());
-	display->println((std::to_string(humidity->read()) + " %").c_str());
-	display->println((std::to_string(pressure->read()) + " Pa").c_str());
-
-	for (int i = 0; i < 3; i++) {
-		Serial.printf("Sensor wody %d: ", i+1);
-		Serial.println( (waterLevels[i]->read() ? "Jest woda" : "Nie ma wody") );
+	if ( ( relays[0]->getState() | relays[1]->getState() ) == HIGH) {
+		if (currentState != ProgramState::FillUpWater) {
+			currentState = ProgramState::FillUpWater;
+			display->fillScreen(ILI9341_BLACK);
+			display->setCursor(0, 0);
+			display->setTextColor(ILI9341_WHITE);  
+			display->println("Hydroponika");
+			display->println("");
+			display->setTextColor(ILI9341_BLUE);  
+			display->println("Uzupełnianie wody");
+			display->setTextColor(ILI9341_WHITE);  
+		}
+	} else if (currentState != ProgramState::ReadSensors) {
+		currentState = ProgramState::ReadSensors;
 	}
 
-	Serial.print("Pompka 0: ");
-	Serial.println(relays[0]->getState());
-	Serial.print("Pompka 1: ");
-	Serial.println(relays[1]->getState());
+	if (currentState == ProgramState::ReadSensors) {
+		// Update sensorów
+		for (int i = 0; i < SENSORS_NUM; i++) {
+			sensors[i]->update();
+		}
 
-	Serial.println("============================");
+		display->fillScreen(ILI9341_BLACK);
+		display->setCursor(0, 0);
+		display->setTextColor(ILI9341_WHITE);  
+		display->println("Hydroponika");
+		display->println("");
+		display->println((float2string(temperatures[0]->read()) + " `C").c_str());
+		display->println((float2string(temperatures[1]->read()) + " `C").c_str());
+		display->println((float2string(temperatures[0]->read()) + " `C").c_str());
+		display->println((float2string(humidity->read()) + " %").c_str());
+		display->println((std::to_string(pressure->read()) + " `C").c_str());
+	}
+}
 
+
+String float2string (float value, int precision) {
+    char buffer[16];
+    dtostrf(value, 0, precision, buffer);
+    return String(buffer);
 }
