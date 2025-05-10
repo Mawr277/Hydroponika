@@ -216,7 +216,7 @@ void loop() {
 		display->println((float2string(temperatures[1]->read()) + " `C").c_str());
 		display->println((float2string(temperatures[0]->read()) + " `C").c_str());
 		display->println((float2string(humidity->read()) + " %").c_str());
-		display->println((std::to_string(pressure->read()) + " `C").c_str());
+		display->println((std::to_string(pressure->read()) + " Pa").c_str());
 	}
 }
 
